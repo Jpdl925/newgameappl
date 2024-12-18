@@ -1,12 +1,9 @@
-import { Button, Menu, MenuButton, MenuItem, MenuList } from "@chakra-ui/react"
-import { useState } from "react";
-import { BiSolidChevronDown } from "react-icons/bi"
+import { Button, Menu, MenuButton, MenuItem, MenuList } from "@chakra-ui/react";
+import { BiSolidChevronsDown } from "react-icons/bi";
+import useGameQueryStore from "../store";
 
-interface Props {
-    onSelectSortOrder: (sortOrder:string) => void;
-}
 
-const SortSelector = ({onSelectSortOrder}:Props) => {
+const SortSelector = () => {
 
     const sortOrders = [
         {value: '', label: 'Relevance'},
@@ -14,29 +11,26 @@ const SortSelector = ({onSelectSortOrder}:Props) => {
         {value: 'name', label: 'Name'},
         {value: 'released', label: 'Released date'},
         {value: '-metacritic', label: 'Popularity'},
-        {value: '-rating', label: 'Average'},
+        {value: '-rating', label: 'Average rating'},
     ]
 
-    const [selectedSort, setselectedSort] = useState('Relevance');
+   const sortOrder =  useGameQueryStore(s => s.gameQuery.sortOrder);
+   const setSortOrder  = useGameQueryStore( s => s.setSortOrder);
 
-    const handleSelectSort = (value: string, label:string) => {
-        setselectedSort(label);
-        onSelectSortOrder(value);
-
-
-        
-    }
+    const currentSortOrder = sortOrders.find(order => order.value === sortOrder )
 
   return (
     <>
-    <Menu>
-        <MenuButton as={Button} rightIcon={<BiSolidChevronDown/>}>Sort by {selectedSort}</MenuButton>
+      <Menu>
+        <MenuButton as={Button} rightIcon={<BiSolidChevronsDown />}>
+          Order by : {currentSortOrder?.label || 'Relevence'}
+        </MenuButton>
         <MenuList>
-            {sortOrders.map(order => <MenuItem onClick={() => handleSelectSort(order.value, order.label) } key={order.value} value={order.value}>{order.label}</MenuItem>)}
+          {sortOrders.map(order => <MenuItem onClick={()=>setSortOrder(order.value)} key={order.value} value={order.value}>{order.label}</MenuItem>)}
         </MenuList>
-    </Menu>
+      </Menu>
     </>
-  )
-}
+  );
+};
 
-export default SortSelector
+export default SortSelector;

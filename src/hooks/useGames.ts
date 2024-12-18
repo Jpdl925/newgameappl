@@ -1,54 +1,28 @@
-import { useQuery } from "@tanstack/react-query";
-import { GameQuery } from "../App";
-import { CACHE_KEY_GAMES } from "../constants";
-import apiClient from "../services/apiClient";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import ms from "ms";
+import APIClient, { FetchResponse } from "../services/apiClient";
+import useGameQueryStore from "../store";
+import Game  from "../entities/Game";
 
-export interface Platform {
-  id: number;
-  name: string;
-  slug: string;
+const apiClient = new APIClient<Game>('/games')
+
+const useGames = () => {
+
+
+    const gameQuery = useGameQueryStore(s => s.gameQuery)
+
+    return useInfiniteQuery<FetchResponse<Game>, Error>({
+        queryKey: ['games', gameQuery],
+        queryFn: ({ pageParam = 1 }) =>
+            apiClient
+                .getAll({
+                    params: { genres: gameQuery.genreId, parent_platforms: gameQuery.platformId, ordering: gameQuery.sortOrder, search: gameQuery.searchText, page: pageParam }
+                }),
+        getNextPageParam: (lastPage, allPages) => {
+            return lastPage.next ? allPages.length + 1 : undefined;
+        },
+        staleTime: ms('24h') //24hrs
+    })
 }
-
-// Help us shaping our data in the form of our interfaces (type) props to pass data from parent components to child
-export interface Game {
-  id: number;
-  name: string;
-  background_image: string;
-  parent_platforms: { platform: Platform }[];
-  metacritic: number;
-}
-
-export interface FetchGameResponse<T> {
-  count: number;
-  results: T[];
-}
-
-const useGames = (gameQuery: GameQuery) =>
-  useQuery({
-    queryKey: [CACHE_KEY_GAMES, gameQuery],
-    queryFn: () =>
-      apiClient
-        .get<FetchGameResponse<Game>>("/games", {
-          params: {
-            genres: gameQuery.genre?.id,
-            parent_platforms: gameQuery.platform?.id,
-            ordering: gameQuery.sortOrder,
-            search: gameQuery.searchText,
-          },
-        })
-        .then((res) => res.data),
-  });
-// useData<Game>(
-//   "games",
-//   {
-//     params: {
-//       genres: gameQuery.genre?.id,
-//       parent_platforms: gameQuery.platform?.id,
-//       ordering: gameQuery.sortOrder,
-//       search: gameQuery.searchText,
-//     },
-//   },
-//   [gameQuery]
-// );
 
 export default useGames;
